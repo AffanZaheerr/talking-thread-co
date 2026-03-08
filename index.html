@@ -766,6 +766,15 @@ footer{background:var(--text);padding:3rem 4rem 1.8rem;text-align:center}
         ⏱️ We typically confirm within <strong>30 minutes</strong> during working hours.
       </div>
 
+      <!-- Owner reply buttons - shown after customer sends screenshot -->
+      <div id="owner-actions" style="width:100%;margin-bottom:1rem;display:none">
+        <div style="font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);font-weight:700;margin-bottom:.7rem;text-align:center">Owner Actions</div>
+        <div style="display:flex;gap:.7rem">
+          <button onclick="ownerConfirm()" style="flex:1;padding:.85rem;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;border-radius:12px;font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.3)">✅ Confirm Order</button>
+          <button onclick="ownerDecline()" style="flex:1;padding:.85rem;background:linear-gradient(135deg,#e05a5a,#c03030);color:white;border:none;border-radius:12px;font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:0 4px 14px rgba(220,80,80,.3)">❌ Decline Order</button>
+        </div>
+        <div style="font-size:.62rem;color:var(--muted);text-align:center;margin-top:.5rem">Tapping these will open WhatsApp with pre-typed reply to customer</div>
+      </div>
       <div class="conf-acts">
         <button class="btn btn-o" onclick="closeCOClear()" style="width:100%;justify-content:center">✿ Continue Shopping</button>
       </div>
@@ -1443,35 +1452,49 @@ function toggleWABtn(){
 function sendPaymentWhatsApp(){
   var tot = cart.reduce(function(s,c){return s+c.price*c.qty;},0);
   oData.oid = 'TTC-'+Date.now().toString().slice(-6);
+  oData.tot = tot;
   document.getElementById('conf-oid').textContent='#'+oData.oid;
-
   var custPhone = oData.phone;
+  var itemSummary = cart.map(function(c){ return c.name+' x'+c.qty; }).join(', ');
 
-  var confirmText = 'Hi ' + oData.name + '! Your order #' + oData.oid + ' is CONFIRMED. Rs.' + tot + ' received. We will deliver in 5-7 days. Thank you - Talking Thread Co';
-  var declineText = 'Hi ' + oData.name + ', payment NOT received for #' + oData.oid + '. Please pay Rs.' + tot + ' to UPI: shaheenbegum.8423@okicici and resend screenshot.';
+  // Short confirm/decline replies (pre-typed for owner to send to customer)
+  var confirmText = 'Confirmed '+oData.oid;
+  var declineText = 'Declined '+oData.oid;
 
-  var confirmLink = 'https://wa.me/91' + custPhone + '?text=' + encodeURIComponent(confirmText);
-  var declineLink = 'https://wa.me/91' + custPhone + '?text=' + encodeURIComponent(declineText);
+  // Clean wa.me links — just phone + short pre-typed text
+  var confirmLink = 'wa.me/91'+custPhone+'?text='+confirmText.replace(/ /g,'+');
+  var declineLink = 'wa.me/91'+custPhone+'?text='+declineText.replace(/ /g,'+');
 
-  var itemSummary = cart.map(function(c){ return c.name + ' x' + c.qty; }).join(', ');
+  var msg = ''
+    + '🧶 ORDER '+oData.oid+'\n'
+    + oData.name+' | Rs.'+tot+'\n'
+    + itemSummary+'\n'
+    + '📞 '+custPhone+'\n'
+    + (oData.notes ? '📝 '+oData.notes+'\n' : '')
+    + '📍 '+oData.city+' - '+oData.pincode+'\n'
+    + '\n'
+    + '✅ CONFIRM: '+confirmLink+'\n'
+    + '❌ DECLINE: '+declineLink;
 
-  var fullMsg = ''
-    + 'New Order #' + oData.oid + '\n'
-    + oData.name + ' | Rs.' + tot + '\n'
-    + itemSummary + '\n'
-    + 'Phone: ' + custPhone + '\n'
-    + 'Address: ' + oData.address + ', ' + oData.city + ' - ' + oData.pincode + '\n\n'
-    + 'Screenshot above. Tap to reply:\n\n'
-    + 'CONFIRM: ' + confirmLink + '\n\n'
-    + 'DECLINE: ' + declineLink;
-
-  window.open('https://wa.me/918423333394?text=' + encodeURIComponent(fullMsg), '_blank');
-
-  setTimeout(function(){
-    goStep(4);
-    toast('WhatsApp opened! Attach your screenshot and send.');
-  }, 600);
+  window.open('https://wa.me/918423333394?text='+encodeURIComponent(msg),'_blank');
+  setTimeout(function(){ goStep(4); toast('WhatsApp opened! Attach your screenshot and send.'); }, 600);
 }
+
+
+// Owner taps Confirm on website admin or you call this from WA
+function ownerConfirm(){
+  var msg = encodeURIComponent(
+    'Hi ' + oData.name + '! Your order #' + oData.oid + ' is confirmed. Rs.' + (oData.tot||'') + ' received. We will deliver in 5-7 days. Thank you - Talking Thread Co'
+  );
+  window.open('https://wa.me/91' + oData.phone + '?text=' + msg, '_blank');
+}
+function ownerDecline(){
+  var msg = encodeURIComponent(
+    'Hi ' + oData.name + ', payment not received for #' + oData.oid + '. Please pay Rs.' + (oData.tot||'') + ' to UPI: shaheenbegum.8423@okicici and resend screenshot.'
+  );
+  window.open('https://wa.me/91' + oData.phone + '?text=' + msg, '_blank');
+}
+
 
 function sendWA(){
   const items=cart.map(c=>`• ${c.name} × ${c.qty} = ₹${c.price*c.qty}`).join('%0A');
