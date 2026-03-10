@@ -88,6 +88,9 @@ body:has(button:hover,a:hover) #cur-r{opacity:0}
 .nav-r{display:flex;align-items:center;gap:.6rem}
 .nav-ico{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.88rem;color:var(--muted);transition:all .22s}
 .nav-ico:hover{border-color:var(--pink);color:var(--pink);background:var(--pink-xl)}
+.nav-wl{position:relative}
+.nav-wl .wl-badge{position:absolute;top:-5px;right:-5px;background:var(--pink);color:white;border-radius:50%;width:16px;height:16px;font-size:.52rem;font-weight:700;display:none;align-items:center;justify-content:center;border:1.5px solid white}
+.nav-wl .wl-badge.on{display:flex}
 .nav-cart{background:linear-gradient(135deg,var(--pink),var(--lav-d));color:white;padding:.45rem 1.2rem;border-radius:30px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;transition:all .25s;box-shadow:0 4px 18px rgba(201,107,138,.3)}
 .nav-cart:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(201,107,138,.4)}
 .cbadge{background:rgba(255,255,255,.3);border-radius:50%;width:18px;height:18px;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:transform .2s}
@@ -574,7 +577,8 @@ footer{background:var(--text);padding:3rem 4rem 1.8rem;text-align:center}
 }
 @media(max-width:900px){
   #nav{padding:.9rem 1.5rem}#nav.scrolled{padding:.7rem 1.5rem}
-  .nav-links,.nav-ico:not(.nav-cart){display:none}
+  .nav-links,.nav-ico:not(.nav-cart):not(.nav-wl){display:none}
+  .nav-wl{display:none}
   .hbg{display:flex}
   .nav-logo-wrap{flex:1;min-width:0}
   .nav-wordmark{font-size:1.5rem}
@@ -860,6 +864,7 @@ footer{background:var(--text);padding:3rem 4rem 1.8rem;text-align:center}
   </ul>
   <div class="mob-btns">
     <button class="btn btn-o" onclick="toggleSrch();closeMob()">🔍 Search</button>
+    <button class="btn btn-o" onclick="goToWL();closeMob()">🤍 Wishlist</button>
     <button class="btn btn-p" onclick="toggleCart();closeMob()">🧺 Cart</button>
   </div>
 </div>
@@ -879,6 +884,7 @@ footer{background:var(--text);padding:3rem 4rem 1.8rem;text-align:center}
   </ul>
   <div class="nav-r">
     <button class="nav-ico" onclick="toggleSrch()" title="Search">🔍</button>
+    <button class="nav-ico nav-wl" onclick="goToWL()" title="Wishlist">🤍<span class="wl-badge" id="wl-badge">0</span></button>
     <button class="nav-cart" onclick="toggleCart()">🧺 Cart <span class="cbadge" id="cbadge">0</span></button>
     <button class="hbg" id="hbg" onclick="toggleMob()"><span></span><span></span><span></span></button>
   </div>
@@ -1339,6 +1345,12 @@ function srt(v){curSort=v;renderProds();}
 function setV(v,b){curView=v;document.querySelectorAll('.vb').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderProds();}
 
 /* ── WISHLIST ── */
+function goToWL(){
+  const s=document.getElementById('wl-sec');
+  if(!wl.length){toast('🤍 Your wishlist is empty — heart a product first!');return;}
+  s.classList.add('on');
+  setTimeout(()=>s.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
 function toggleWL(id,e){
   e.stopPropagation();
   const i=wl.indexOf(id);
@@ -1348,6 +1360,8 @@ function toggleWL(id,e){
 }
 function renderWL(){
   const s=document.getElementById('wl-sec'),g=document.getElementById('wl-grid');
+  const badge=document.getElementById('wl-badge');
+  if(badge){badge.textContent=wl.length;badge.classList.toggle('on',wl.length>0);}
   if(!wl.length){s.classList.remove('on');return;}
   s.classList.add('on');
   g.innerHTML=wl.map(id=>{const p=PRODS.find(x=>x.id===id);return`<div class="wl-c"><div class="wl-e">${p.e}</div><div class="wl-n">${p.name}</div><div class="wl-p">${ccFmtPrice(p.price)}</div></div>`;}).join('');
